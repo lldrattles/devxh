@@ -1,0 +1,21 @@
+# Build outputs
+build*/
+dist/
+
+# Game assets — never commit (you must own the game)
+*.mpq
+*.MPQ
+
+# Local saves / config
+saves/
+config/
+single_*/ 
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vs/
+.vscode/
+*.user
