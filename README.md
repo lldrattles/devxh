@@ -7,7 +7,7 @@ idle player seated so the world stays up, and runs forever until stopped.
 
 Ideal for a VPS. ~2% CPU idle. Stock DevilutionX clients join with no patches.
 
-**Website & public gate list:** [devxh.d2hc.com](https://devxh.d2hc.com)
+**Website & public gate list:** [devxh.com](https://devxh.com)
 
 ## Quick start
 
@@ -20,11 +20,11 @@ Ideal for a VPS. ~2% CPU idle. Stock DevilutionX clients join with no patches.
 Players connect with stock DevilutionX: Multiplayer → TCP/IP → your server's IP.
 
 Full CLI reference, ZeroTier setup, and the systemd guide: [HANDBOOK.md](HANDBOOK.md)
-(also readable online at the website's [Guides](https://devxh.d2hc.com/guides/)).
+(also readable online at the website's [Guides](https://devxh.com/guides/)).
 
 ## Optional: list your gate publicly
 
-1. Register at the [forum](https://devxh.d2hc.com/forum/gates.php), create a gate,
+1. Register at the [forum](https://devxh.com/forum/gates.php), create a gate,
    copy your API key
 2. Edit `devxh-beat.service` (server id + key), then install:
 
