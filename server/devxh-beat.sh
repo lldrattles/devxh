@@ -8,9 +8,14 @@
 #   2. Fill in SERVER_ID, API_KEY, API_URL below (or via env)
 #   3. Install the systemd unit (devxh-beat.service) and enable it
 #
-# Player count = established TCP connections to the game port
-# (each connected client holds one; the idle host isn't counted
-# because it plays locally).
+# Player count = established TCP connections to the game port from
+# NON-loopback peers (each connected client holds one). The idle host
+# player connects to the listener over 127.0.0.1 and is excluded —
+# verified on vps1: a healthy server always holds exactly one loopback
+# self-connection, which made every gate show 1 more human than present.
+# Same-machine human players via 127.0.0.1 are indistinguishable from
+# the idle host and also excluded; real players join via the server's
+# public/LAN/ZeroTier address, which is always counted.
 #
 # MULTIPLE GATES ON ONE VPS — scope this agent to one instance:
 #   DEVXH_UNIT=devxh@hellfire-east.service   (systemd template units;
@@ -60,11 +65,21 @@ game_pid() {
 
 player_count() {
     # Established connections to the game port (IPv4+IPv6), excluding LISTEN
+    # and excluding loopback peers (the idle host's self-connection).
+    # ss columns (-Htn): $1=State $4=Local:Port $5=Peer:Port
+    # NOTE: peers print as addr:port, so match loopback by PREFIX only —
+    # a `$`-anchored regex never matches once the port suffix is there
+    # (first attempt had exactly that bug; fixture-tested now).
+    # 127. prefix covers all of 127.0.0.0/8; [::ffff: covers v4-mapped forms.
     local n=0
     if command -v ss >/dev/null 2>&1; then
-        n=$(ss -Htn "sport = :${GAME_PORT}" 2>/dev/null | grep -c ESTAB || true)
+        n=$(ss -Htn "sport = :${GAME_PORT}" 2>/dev/null | awk '
+            $1 == "ESTAB" && $5 !~ /^(127\.|::1|\[::1\]|\[::ffff:)/ { c++ }
+            END { print c+0 }')
     elif command -v netstat >/dev/null 2>&1; then
-        n=$(netstat -tn 2>/dev/null | awk -v p=":${GAME_PORT}" '$4 ~ p && $6 == "ESTABLISHED"' | wc -l)
+        n=$(netstat -tn 2>/dev/null | awk -v p=":${GAME_PORT}" '
+            $4 ~ p && $6 == "ESTABLISHED" && $5 !~ /^(127\.|::1|\[::1\]|\[::ffff:)/ { c++ }
+            END { print c+0 }')
     fi
     echo "$((n < 0 ? 0 : n))"
 }

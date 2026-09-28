@@ -215,6 +215,20 @@ Tips:
 - Manage with tab completion: `systemctl restart devxh-beat@west`,
   `journalctl -u devxh@east -f`.
 
+## Verifying the player count
+
+The heartbeat agent counts **non-loopback** established connections on the
+game port, so the idle host player (which connects to the listener over
+`127.0.0.1`) never inflates the public listing. To audit any gate by hand:
+
+```bash
+sudo ss -Htnp 'sport = :6112'
+```
+
+Every `ESTAB` whose peer address is **not** `127.0.0.1`/`::1` is a real
+player. Exactly one loopback self-connection owned by `devilutionx-server`
+is normal and healthy — that's the idle host.
+
 ## Logging and diagnostics
 
 The server logs to stderr (journald picks it up under systemd):
