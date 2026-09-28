@@ -9,13 +9,57 @@ ideal for a systemd service, a container, or any machine without a desktop.
 The normal `devilutionx` client is unaffected and joins the server's game
 exactly like any other multiplayer game.
 
+## Requirements (release binary)
+
+The release binary is built for **x86-64 Linux, glibc ≥ 2.35** — in practice
+**Ubuntu 22.04 LTS or newer** (22.04, 24.04, 26.04, and current Debian releases
+all qualify). Only three shared libraries are not bundled; install them once:
+
+```bash
+sudo apt install libsdl2-2.0-0 libsdl2-image-2.0-0 zlib1g
+```
+
+(On Debian the package names are the same. `zlib1g` is present on every
+mainstream distro by default.)
+
+Everything else — `libfmt`, `libsodium`, `bzip2`, and the C++ runtime — is
+statically linked into the binary, so there are no version-specific
+dependencies like `libfmt.so.9` to chase across distro releases.
+
+MPQ game assets are always supplied by you; they are never included.
+
 ## Building (Linux / WSL)
+
+For a dev build:
 
 ```bash
 cd DevilutionX-1.5.5
 cmake -B build-server -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build build-server -j$(nproc) --target devilutionx devilutionx-server
 ```
+
+For a **release binary** (what ships in the GitHub tarball), use the same
+flag set the DevXH release uses, so the result runs on any Ubuntu 22.04+
+distro regardless of which host it was built on:
+
+```bash
+cmake -B build-server -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+    -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12 \
+    -DDEVILUTIONX_SYSTEM_LIBFMT=OFF \
+    -DDEVILUTIONX_SYSTEM_LIBSODIUM=OFF \
+    -DDEVILUTIONX_SYSTEM_BZIP2=OFF \
+    -DDEVILUTIONX_STATIC_CXX_STDLIB=ON
+cmake --build build-server -j$(nproc) --target devilutionx-server
+```
+
+- `*_SYSTEM_*=OFF` statically bundles vendored `libfmt` (10.0.0), `libsodium`,
+  and `bzip2` from `3rdParty/` — upstream DevilutionX does the same in its
+  release workflow because these libraries' sonames churn across distro
+  releases (`libfmt.so.9` vs `libfmt.so.10`, `libsodium.so.23` vs `.26`).
+- `DEVILUTIONX_STATIC_CXX_STDLIB=ON` statically links `libstdc++`.
+- `Source/glibc_compat.c` is linked into the server automatically; it
+  backports newer-glibc symbols (`__isoc23_strtol*`, `arc4random`) so a
+  binary built on a 24.04/26.04 host still runs on the 2.35 floor.
 
 This produces:
 

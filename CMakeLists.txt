@@ -354,6 +354,15 @@ if(NOT ANDROID AND NOT UWP_LIB)
   add_executable(devilutionx-server Source/headless_server.cpp)
   target_include_directories(devilutionx-server PRIVATE Source)
   target_link_libraries(devilutionx-server PRIVATE libdevilutionx)
+  # Headless servers run on whatever distro gate operators have: pin the
+  # runtime floor to glibc >= 2.35 (Ubuntu 22.04 LTS) by backporting
+  # newer-glibc symbols (C23 strtol redirects, arc4random) at link time.
+  # Release binaries built on newer hosts (24.04/26.04) stay runnable on
+  # 22.04. See Source/glibc_compat.c.
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_library(devxh_glibc_compat OBJECT Source/glibc_compat.c)
+    target_link_libraries(devilutionx-server PRIVATE devxh_glibc_compat)
+  endif()
 endif()
 
 if(GPERF)

@@ -7,6 +7,10 @@ idle player seated so the world stays up, and runs forever until stopped.
 
 Ideal for a VPS. ~2% CPU idle. Stock DevilutionX clients join with no patches.
 
+Runs on any modern distro — Ubuntu 22.04 / 24.04 / 26.04 LTS, Debian — with three
+packages (`sudo apt install libsdl2-2.0-0 libsdl2-image-2.0-0 zlib1g`); `libfmt`,
+`libsodium`, `bzip2`, and the C++ runtime are statically bundled.
+
 **Website & public gate list:** [devxh.com](https://devxh.com)
 
 ## Quick start
@@ -38,12 +42,19 @@ Your gate appears on the website's Server List with live player counts.
 
 ## Building from source
 
+Dev build:
+
 ```bash
 cmake -B build-server -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build build-server -j$(nproc) --target devilutionx devilutionx-server
 ```
 
 Produces `devilutionx` (unchanged stock client) and `devilutionx-server` (the mod).
+
+For a **release binary** that runs on any Ubuntu 22.04+ distro regardless of build
+host, use the release flag set documented in [HANDBOOK.md](HANDBOOK.md) — it statically
+bundles `libfmt`/`libsodium`/`bzip2` and keeps the glibc 2.35 floor via
+`Source/glibc_compat.c`.
 
 ## License & assets
 
