@@ -180,6 +180,41 @@ WantedBy=multi-user.target
 The binary itself requires no window manager and works in containers
 (`docker run -d -p 6112:6112 ...`) without extra device passthroughs.
 
+## Hosting multiple gates on one machine
+
+Each gate is one systemd **template instance** plus one env file. Release
+packages ship `devxh@.service`, `devxh-beat@.service`, and
+`devxh-instance.env.example`. Per gate (example instance name `east`):
+
+```bash
+sudo cp devxh-instance.env.example /etc/devxh/east.env
+sudo chmod 600 /etc/devxh/east.env && sudo nano /etc/devxh/east.env
+# set DEVXH_NAME, a unique DEVXH_PORT (6112, 6113, ...), DEVXH_GAME,
+# DEVXH_DIFFICULTY, and this gate's DEVXH_SERVER_ID + DEVXH_API_KEY
+# (register each gate separately on the website: My Gates -> Create Gate)
+
+sudo cp devxh@.service devxh-beat@.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now devxh@east devxh-beat@east
+sudo ufw allow 6113/tcp    # each additional gate's own port
+```
+
+Every instance gets its own save dir (`/var/lib/devxh/east`), config dir,
+port, and listing registration. The heartbeat agent for `devxh@east` scopes
+its process checks to that exact instance via systemd (`DEVXH_UNIT`), so
+player counts and uptime never bleed across gates. A gate that is down is
+reported as down even when other gates on the box are running.
+
+Tips:
+
+- Different operator user? Override with a drop-in
+  (`sudo systemctl edit devxh@east` → `[Service] User=youruser`) instead of
+  editing the templates.
+- Private gate: add `--password` via the same drop-in (override `ExecStart`).
+- Instance names: letters, digits, dashes (`east`, `west`, `hc-realms`).
+- Manage with tab completion: `systemctl restart devxh-beat@west`,
+  `journalctl -u devxh@east -f`.
+
 ## Logging and diagnostics
 
 The server logs to stderr (journald picks it up under systemd):

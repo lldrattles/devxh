@@ -1,0 +1,23 @@
+[Unit]
+Description=DevXH gate heartbeat agent for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Same operator user as the game unit. Different user on your box? Drop-in:
+#   sudo systemctl edit devxh-beat@%i
+#     [Service]
+#     User=devxh
+User=games
+# Per-instance configuration: /etc/devxh/%i.env (shared with devxh@%i).
+# Required: DEVXH_SERVER_ID, DEVXH_API_KEY, DEVXH_PORT
+# Scope heartbeat checks to exactly this gate's process via systemd:
+Environment=DEVXH_UNIT=devxh@%i.service
+EnvironmentFile=/etc/devxh/%i.env
+ExecStart=/opt/devxh/devxh-beat.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

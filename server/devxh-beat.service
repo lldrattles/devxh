@@ -1,0 +1,19 @@
+[Unit]
+Description=DevXH gate heartbeat agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=games
+# --- EDIT THESE THREE VALUES ---
+Environment=DEVXH_SERVER_ID=1
+Environment=DEVXH_API_KEY=devxh_REPLACE_ME
+Environment=DEVXH_PORT=6112
+# -------------------------------
+ExecStart=/opt/devxh/devxh-beat.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
